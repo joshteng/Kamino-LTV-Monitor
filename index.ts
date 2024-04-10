@@ -4,10 +4,19 @@ import {
 } from "@hubbleprotocol/kamino-lending-sdk";
 import { PublicKey } from "@solana/web3.js";
 import { sleep } from "bun";
-import { WALLETS, conn, pushoverClient } from "./constants";
+import {
+  DISCORD_WEBHOOK,
+  WALLETS,
+  conn,
+  pushoverClient,
+  uptimeConfig,
+} from "./constants";
 import { timeOutPromise } from "./utilities";
+import { UptimeMonitor } from "uptime-monitor-sdk";
 
 console.log("Starting Kamino LTV monitor...");
+
+UptimeMonitor(uptimeConfig).init();
 
 async function getMainMarket() {
   try {
@@ -54,8 +63,24 @@ while (true) {
             .mul(100)
             .toFixed(2)}%`;
           console.log(msg);
-          if (res[0].loanToValue().gte("0.7"))
-            pushoverClient.notify("Liquidation Warning: " + msg, 1);
+          if (res[0].loanToValue().gte("0.6")) {
+            const warningMsg = "Kamino Liquidation Warning: " + msg;
+            pushoverClient.notify(warningMsg, 1);
+
+            if (DISCORD_WEBHOOK) {
+              const messagePayload = {
+                content: warningMsg,
+              };
+
+              fetch(DISCORD_WEBHOOK, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(messagePayload),
+              }).catch((error) => console.error("Error:", error));
+            }
+          }
         }
       } catch (err) {
         console.error(err);
@@ -66,5 +91,5 @@ while (true) {
     console.error(err);
   }
 
-  await sleep(60_000); // every min
+  await sleep(120_000); // every 2 mins
 }
