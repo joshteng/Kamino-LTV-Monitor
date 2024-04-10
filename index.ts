@@ -1,4 +1,7 @@
-import { KaminoMarket } from "@hubbleprotocol/kamino-lending-sdk";
+import {
+  KaminoMarket,
+  KaminoObligation,
+} from "@hubbleprotocol/kamino-lending-sdk";
 import { PublicKey } from "@solana/web3.js";
 import { sleep } from "bun";
 import { WALLETS, conn, pushoverClient } from "./constants";
@@ -9,13 +12,17 @@ console.log("Starting Kamino LTV monitor...");
 async function getMainMarket() {
   try {
     return await Promise.race([
-      await KaminoMarket.load(
+      KaminoMarket.load(
         conn,
         new PublicKey("7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF")
       ),
-      timeOutPromise<KaminoMarket | null>(2000),
+      timeOutPromise<KaminoMarket | null>(
+        10_000,
+        "Failed to get Kamino markets"
+      ),
     ]);
   } catch (err) {
+    console.log("Error getting market");
     return getMainMarket();
   }
 }
@@ -25,11 +32,21 @@ console.log("Ready...");
 
 while (true) {
   try {
-    await market?.refreshAll();
+    await Promise.race([
+      market?.refreshAll(),
+      timeOutPromise<void>(20_000, "Failed to refresh Kamino markets"),
+    ]);
+
     WALLETS.forEach(async (wallet) => {
       try {
         console.log(`Getting LTV for ${wallet}...`);
-        const res = await market?.getAllUserObligations(new PublicKey(wallet));
+        const res = await Promise.race([
+          market?.getAllUserObligations(new PublicKey(wallet)),
+          timeOutPromise<KaminoObligation[]>(
+            20_000,
+            "Failed to get user obligations"
+          ),
+        ]);
 
         if (res) {
           const msg = `Current ${wallet} LTV: ${res[0]
