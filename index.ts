@@ -91,5 +91,5 @@ while (true) {
     console.error(err);
   }
 
-  await sleep(120_000); // every 2 mins
+  await sleep(90_000); // every 90 seconds
 }
