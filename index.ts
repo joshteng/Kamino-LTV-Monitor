@@ -63,7 +63,7 @@ while (true) {
             .mul(100)
             .toFixed(2)}%`;
           console.log(msg);
-          if (res[0].loanToValue().gte("0.6")) {
+          if (res[0].loanToValue().gte("0.7")) {
             const warningMsg = "Kamino Liquidation Warning: " + msg;
             pushoverClient.notify(warningMsg, 1);
 
