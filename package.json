@@ -1,0 +1,17 @@
+{
+  "name": "kamino-ltv-monitor",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "@flydotio/dockerfile": "^0.5.4",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@hubbleprotocol/kamino-lending-sdk": "^2.9.12",
+    "@solana/web3.js": "^1.91.4",
+    "pushover-ts": "^1.0.3"
+  }
+}
